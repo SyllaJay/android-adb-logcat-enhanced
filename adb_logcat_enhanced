@@ -1,0 +1,40 @@
+#!/bin/bash
+
+USAGE_INFO="Usage: `basename $0` app.package.name [TAG]\nNote:  CASE SENSITIVE!"
+PRINT_INFO="START TO PRINT:"
+
+case $# in
+	0)
+	echo -e "${USAGE_INFO}"
+	exit 0
+	;;
+esac
+
+if [ $# -gt 2 ]
+	then \
+	echo "Fatal: The number of parameter can not be more than 2!"
+	echo -e "${USAGE_INFO}"
+	exit 0
+fi
+
+PACKAGE=$1
+TAG=$2
+
+# ps command，process name, NAME=PACKAGE，--> PID
+APP_PID=`adb -d shell ps | grep -w "${PACKAGE}" | cut -c10-15 | sed -e 's/ //g'`
+
+echo -e "${USAGE_INFO}"
+echo -e "\n"
+echo -e "`date`\n${PRINT_INFO}\n"
+
+# grep content via PID from "adb logcat -v long"
+if [ -n ${TAG} ]
+	then \
+	adb -d logcat -v long \
+	| tr -d '\r' | sed -e '/^\[.*\]/ {N; s/\n/ /}' | grep -v '^$' \
+	| grep " ${APP_PID}:" | grep -w "${TAG}"
+else 
+	adb -d logcat -v long \
+	| tr -d '\r' | sed -e '/^\[.*\]/ {N; s/\n/ /}' | grep -v '^$' \
+	| grep " ${APP_PID}:"
+fi
